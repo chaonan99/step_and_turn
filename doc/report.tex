@@ -1,0 +1,69 @@
+\input{header}
+
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%封面与目录%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{titlepage}
+\begin{center}
+% Upper part of the page
+\includegraphics[width=0.25\textwidth]{./logo.jpg}\\[1cm]
+\textsc{\LARGE Department of Automation}\\[1.5cm]
+\fs{\Large 人工智能搜索大作业报告}\\[0.5cm]
+% Title
+\hrulefill
+\\[0.8cm]{\centering \huge \hei Step-and-Turn 游戏界面设计与 AI 实现}\\[0.4cm]
+\hrulefill
+\\[4cm]
+
+% Author and supervisor
+\begin{tabbing}       %tabbing  列表
+
+ \hspace*{5cm} \= \hspace{2.6cm} \= \kill
+ % \=     in tabbing environment, sets a tab stop
+ % \kill  in a\tabbing environment, deletes previous line so tabs can be set without outputting text.
+ % \>     in tabbing environment is a forward tab.
+
+\>{\fs\sihao\textbf {班\hspace{1cm}级 \ \ ：}}\>  {\centering\fs\sihao\textbf{~~~~~~~~~自~~3~2}} \\
+\\
+\>{\fs\sihao\textbf {姓\hspace{1cm}名 \ \ ：}}\>  {\centering\fs\sihao\textbf{~~~~~~~~陈~昊~楠}}\\
+\\
+\>{\fs\sihao\textbf {学\hspace{1cm}号 \ \ ：}}\>  {\centering\fs\sihao\textbf{~~~~~~2013011449}}\\
+\\
+\>{\fs\sihao\textbf {授课教师 \ \ ：}}\>  {\centering\fs\sihao\textbf{~~~~~~~~张~长~水}} \\
+
+\end{tabbing}
+\vfill
+{\large \today}
+\end{center}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%正文部分%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{声明}
+\begin{itemize}
+\item 本作业使用评分模板B；
+\item 程序使用{\ttfamily Python}开发，游戏界面使用{\ttfamily pygame}框架；
+\item 运行环境为 {\ttfamily Windows10}操作系统。
+\end{itemize}
+
+\section{Step-and-turn游戏规则}
+该游戏是作者自创的。规则为：
+\begin{itemize}
+	\item 两名游戏者轮流行动；
+	\item 棋盘上有棋子和障碍物，游戏者每人控制一些棋子；
+	\item 每个棋子有四个方向，棋子可能的行动为沿当前方向向前一步（step）和通过左转、右转变换方向（turn）；
+	\item 轮到某位游戏者时，游戏者先选择一枚棋子进行移动，后选择一枚棋子进行旋转，所选棋子可以相同，也可以不同；
+	\item 移动后不得与障碍物、本方其他棋子和对方棋子重叠；
+	\item 率先无法移动的游戏者判为失败。
+\end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=11cm]{logo.jpg}
+\caption{全桥测试电路}
+\label{fig:fullarm}
+\end{figure}
+
+\end{document}

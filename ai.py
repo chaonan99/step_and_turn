@@ -2,7 +2,7 @@ import numpy as np
 from easyAI import TwoPlayersGame
 
 
-class SeptTurn(TwoPlayersGame):
+class StepTurn(TwoPlayersGame):
     def __init__(self, players, board_size=12):
         self.players = players
         self.board_size = board_size
@@ -43,7 +43,7 @@ class SeptTurn(TwoPlayersGame):
 if __name__ == "__main__":
     from easyAI import Human_Player, AI_Player, Negamax
 
-    ai_algo = Negamax(11)
-    game = SeptTurn([AI_Player(ai_algo), AI_Player(ai_algo)])
+    ai_algo = Negamax(2)
+    game = StepTurn([AI_Player(ai_algo), AI_Player(ai_algo)])
     game.play()
     print("player %d loses" % game.nplayer)

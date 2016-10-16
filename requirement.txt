@@ -1,0 +1,4 @@
+easyAI
+numpy
+scipy
+pygame
