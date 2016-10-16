@@ -19,13 +19,6 @@ class Human_Player:
         while not move in possible_moves:
             move = raw_input("\nPlayer %s what do you play ? "%(
                                                       game.nplayer))
-            if move == 'show moves':
-                print( possible_moves )
-            elif move.startswith("move #"):
-                move = possible_moves[int(move[6:])]
-            elif move == 'quit':
-                raise KeyboardInterrupt
-
         return move
 
 class AI_Player:

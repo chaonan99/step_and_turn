@@ -44,7 +44,6 @@ def negamax(game, depth, origDepth, scoring, alpha=+inf, beta=-inf,
 
         # Put the supposedly best move first in the list
 
-
     if (depth == 0) or game.is_over():
         score = scoring(game)
         return  (score - 0.01*depth*abs(score)/score) if score else score
@@ -148,7 +147,7 @@ class Negamax:
         Returns the AI's best move given the current state of the game.
         """
         scoring = self.scoring if self.scoring else (
-                       lambda g: g.scoring() ) # horrible hack
+                       lambda g: g.scoring() )  # horrible hack
 
         self.alpha = negamax(game, self.depth, self.depth, scoring,
                      -self.win_score, +self.win_score, self.tt)

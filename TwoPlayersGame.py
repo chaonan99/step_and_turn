@@ -90,6 +90,12 @@ class TwoPlayersGame:
 
         return history
 
+    def oneStep(self):
+        assert self.player.name == "AI", "Not in AI mode!"
+        move = self.player.ask_move(self)
+        self.make_move(move)
+        self.switch_player()
+
     @property
     def nopponent(self):
         return 2 if (self.nplayer == 1) else 1
@@ -104,6 +110,7 @@ class TwoPlayersGame:
 
     def switch_player(self):
         self.nplayer = self.nopponent
+        print(self.nplayer)
 
     def copy(self):
         return deepcopy(self)

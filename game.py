@@ -1,10 +1,11 @@
 # Step and Turn
 # By chaonan99 (Haonan Chen) chenhaonan1995@gmail.com
-# Project http://chaonan99.github.io
-# Released under MIT license
+# 2016/10/16
 
 import pygame, sys, random, os, copy
 from pygame.locals import *
+import AI
+from TwoPlayersGame import TwoPlayersGame
 
 # Create the constants
 TILESIZE = 80
@@ -52,10 +53,79 @@ STEP_PLAYER2 = 'step_2'
 LIGHT_PLAYER2 = 'light_2'
 TURN_PLAYER2 = 'turn_2'
 READY_PLAYER2 = 'ready_2'
+AIPLAY1 = 'ai_play_1'
+AIPLAY2 = 'ai_play_2'
 
 # map symbols in level file to directions
 DIRECTION1 = {'A':LEFT, 'S':DOWN, 'D':RIGHT, 'W':UP}
 DIRECTION2 = {'J':LEFT, 'K':DOWN, 'L':RIGHT, 'I':UP}
+
+# direction set
+DIRECTIONSET = {'1':['W', 'D', 'S', 'A'], '2':['I', 'L', 'K', 'J']}
+
+
+class StepTurnAI(TwoPlayersGame):
+    def __init__(self, players, levelObj = None):
+        # super(StepTurnAI, self).__init__()
+        print(players)
+        self.players = players
+        self.levelObj = levelObj
+        self.nplayer = 1  # player 1 starts.
+
+    def possible_moves(self):
+        print('call')
+        if self.nplayer == 1:
+            army = self.levelObj['army1']
+            enemy = self.levelObj['army2']
+        else:
+            army = self.levelObj['army2']
+            enemy = self.levelObj['army1']
+        moves = []
+        for soldier in army:
+            if soldierCanMove(self.levelObj['mapObj'], soldier, army + enemy):
+                move = {'from':list(soldier.getPosition()), 'turnPos':[], 'turn':None}
+                for soldierTurn in army:
+                    move['turnPos'] = list(soldierTurn.getPosition())
+                    for turn in range(0, 1):  # 0 for left, 1 for right
+                        move['turn'] = turn
+                        moves.append(copy.deepcopy(move))
+        print(moves)
+        return moves
+
+    def make_move(self, move):
+        turn = move['turn']
+        stepForwardAt(move['from'], self.levelObj['army1'] + self.levelObj['army2'])
+        if turn == 0:
+            turnLeftAt(move['turnPos'], self.levelObj['army1'] + self.levelObj['army2'])
+        else:
+            turnRightAt(move['turnPos'], self.levelObj['army1'] + self.levelObj['army2'])
+
+    # def show(self):
+
+    def lose(self):
+        if self.nplayer == 1:
+            army = self.levelObj['army1']
+            enemy = self.levelObj['army2']
+        else:
+            army = self.levelObj['army2']
+            enemy = self.levelObj['army1']
+        return not canMove(self.levelObj['mapObj'], army, enemy)
+
+    def scoring(self):
+        score = 0
+        if self.nplayer == 1:
+            army = self.levelObj['army1']
+            enemy = self.levelObj['army2']
+        else:
+            army = self.levelObj['army2']
+            enemy = self.levelObj['army1']
+        for soldier in army:
+            if soldierCanMove(self.levelObj['mapObj'], soldier, army + enemy):
+                score = score + 50
+        return score
+
+    def is_over(self):
+        return self.lose()
 
 
 class ImageProvider(object):
@@ -129,7 +199,7 @@ class ImageProvider(object):
 
 
 class Soldier(object):
-    """Soldier"""
+    """Soldier class"""
     def __init__(self, x, y, direction, narmy):
         super(Soldier, self).__init__()
         self.x = x                  # x coordinate on the map
@@ -191,9 +261,9 @@ def main():
             pass
 
 
-# Load game resources
 def loadImage():
-    # A global dict value that will contain all the Pygame
+    """Load game resources"""
+    # Gobal dict value that will contain all the Pygame
     # Surface objects returned by pygame.image.load().
     global IMAGESDICT, TILEMAPPING, OUTSIDEDECOMAPPING, PLAYERIMAGES, MOVEHINT
     IMAGESDICT = {'turn hint': pygame.image.load('resource/RedSelector.png'),
@@ -229,10 +299,17 @@ def loadImage():
     PLAYERIMAGES = ImageProvider()
 
 
-# Run a level of game
 def runGame(levels, levelNum):
+    """Run a level of game"""
     global cameraOffsetX, cameraOffsetY, mapWidth, mapHeight
+    from Player import Human_Player, AI_Player
+    from AI import Negamax
+
     levelObj = copy.deepcopy(levels[levelNum])
+    ai_algo = Negamax(5)
+    game = StepTurnAI([Human_Player(), AI_Player(ai_algo)], levelObj)
+    isAI1 = False
+    isAI2 = True
     mapObj = decorateMap(levelObj['mapObj'], levelObj['army1'], levelObj['army2'])
     mapNeedsRedraw = True  # set to True to call drawMap()
     state = STEP_PLAYER1
@@ -298,6 +375,27 @@ def runGame(levels, levelNum):
                 elif event.key == K_BACKSPACE:
                     return 'reset' # Reset the level.
 
+                elif event.key == K_i:
+                    if state in [STEP_PLAYER1, LIGHT_PLAYER1]:
+                        isAI1 = True
+                        state = AIPLAY1
+                    elif state in [STEP_PLAYER2, LIGHT_PLAYER2]:
+                        isAI2 = True
+                        state = AIPLAY2
+                    else:
+                        pass
+                    pl1 = AI_Player(ai_algo) if isAI1 else Human_Player()
+                    pl2 = AI_Player(ai_algo) if isAI2 else Human_Player()
+                    game = StepTurnAI([pl1, pl2], levelObj)
+                elif event.key == K_o:
+                    isAI1 = False
+                    isAI2 = False
+                    if getArmyFromState(state) == 1:
+                        state = STEP_PLAYER1
+                    elif getArmyFromState(state) == 2:
+                        state = STEP_PLAYER2
+                    game = StepTurnAI([Human_Player(), Human_Player()], levelObj)
+
             elif event.type == KEYUP:
                 # Unset the camera move mode.
                 if event.key == K_d:
@@ -330,7 +428,7 @@ def runGame(levels, levelNum):
 
         elif state == LIGHT_PLAYER1:
             temp = list(getTileAtPixel(mousex, mousey))
-            if not temp in holdList:
+            if temp not in holdList:
                 mhint[0] = [None, None]
                 currentOn = [None, None]
                 mapNeedsRedraw = True
@@ -354,23 +452,22 @@ def runGame(levels, levelNum):
 
         elif state == READY_PLAYER1:
             temp = list(getTileAtPixel(mousex, mousey))
-            if not temp in holdList:
+            if temp not in holdList:
                 mhint[1:5] = [None, None] * 4
                 mapNeedsRedraw = True
                 state = TURN_PLAYER1
             elif mouseClicked:
                 if temp == holdList[1]:
                     turnRightAt(currentOn, levelObj['army1'])
-                    mapNeedsRedraw = True
-                    state = STEP_PLAYER2
-                    mhint[1:5] = [None, None] * 4
-                    currentOn = [None, None]
                 elif temp == holdList[2]:
                     turnLeftAt(currentOn, levelObj['army1'])
-                    mapNeedsRedraw = True
-                    state = STEP_PLAYER2
-                    mhint[1:5] = [None, None] * 4
-                    currentOn = [None, None]
+                else:
+                    pass
+                mapNeedsaRedraw = True
+                state = AIPLAY2 if isAI2 else STEP_PLAYER2
+                mhint[1:5] = [None, None] * 4
+                currentOn = [None, None]
+                game.switch_player()
 
         elif state == STEP_PLAYER2:
             assert canMove(levelObj['mapObj'], levelObj['army2'], levelObj['army1']), \
@@ -385,7 +482,7 @@ def runGame(levels, levelNum):
 
         elif state == LIGHT_PLAYER2:
             temp = list(getTileAtPixel(mousex, mousey))
-            if not temp in holdList:
+            if temp not in holdList:
                 mhint[0] = [None, None]
                 currentOn = [None, None]
                 mapNeedsRedraw = True
@@ -409,23 +506,42 @@ def runGame(levels, levelNum):
 
         elif state == READY_PLAYER2:
             temp = list(getTileAtPixel(mousex, mousey))
-            if not temp in holdList:
+            if temp not in holdList:
                 mhint[1:5] = [None, None] * 4
                 mapNeedsRedraw = True
                 state = TURN_PLAYER2
             elif mouseClicked:
                 if temp == holdList[1]:
                     turnRightAt(currentOn, levelObj['army2'])
-                    mapNeedsRedraw = True
-                    state = STEP_PLAYER1
-                    mhint[1:5] = [None, None] * 4
-                    currentOn = [None, None]
                 elif temp == holdList[2]:
                     turnLeftAt(currentOn, levelObj['army2'])
-                    mapNeedsRedraw = True
-                    state = STEP_PLAYER1
-                    mhint[1:5] = [None, None] * 4
-                    currentOn = [None, None]
+                else:
+                    pass
+                mapNeedsRedraw = True
+                state = AIPLAY1 if isAI1 else STEP_PLAYER1
+                mhint[1:5] = [None, None] * 4
+                currentOn = [None, None]
+                game.switch_player()
+
+        elif state == AIPLAY1:
+            game.oneStep()
+            mapNeedsRedraw = True
+            if not canMove(levelObj['mapObj'], levelObj['army2'], levelObj['army1']):
+                winPlayer = 1
+            if isAI2:
+                state = AIPLAY2
+            else:
+                state = STEP_PLAYER2
+
+        elif state == AIPLAY2:
+            game.oneStep()
+            mapNeedsRedraw = True
+            if not canMove(levelObj['mapObj'], levelObj['army1'], levelObj['army2']):
+                winPlayer = 2
+            if isAI1:
+                state = AIPLAY1
+            else:
+                state = STEP_PLAYER1
 
         # game surf draw
         DISPLAYSURF.fill(BGCOLOR)
@@ -469,32 +585,38 @@ def runGame(levels, levelNum):
         FPSCLOCK.tick()
 
 
-# Judge if any soldier in army can move
 def canMove(mapObj, army, enemy):
+    """Judge if any soldier in army can move"""
     for soldier in army:
-        direction = soldier.direction
-        x, y = soldier.getPosition()
-        if direction == UP:
-            xOffset = 0
-            yOffset = -1
-        elif direction == RIGHT:
-            xOffset = 1
-            yOffset = 0
-        elif direction == DOWN:
-            xOffset = 0
-            yOffset = 1
-        elif direction == LEFT:
-            xOffset = -1
-            yOffset = 0
-
-        if not isWall(mapObj, x + xOffset, y + yOffset) and not isSoldier(enemy + army, x + xOffset, y + yOffset):
+        if soldierCanMove(mapObj, soldier, army + enemy):
             return True
 
     return False
 
 
-# Convert mouse point to coordinate on the map
+def soldierCanMove(mapObj, soldier, allarmy):
+    direction = soldier.direction
+    x, y = soldier.getPosition()
+    if direction == UP:
+        xOffset = 0
+        yOffset = -1
+    elif direction == RIGHT:
+        xOffset = 1
+        yOffset = 0
+    elif direction == DOWN:
+        xOffset = 0
+        yOffset = 1
+    elif direction == LEFT:
+        xOffset = -1
+        yOffset = 0
+
+    if not isWall(mapObj, x + xOffset, y + yOffset) and not isSoldier(allarmy, x + xOffset, y + yOffset):
+        return True
+    else:
+        return False
+
 def getTileAtPixel(x, y):
+    """Convert mouse point to coordinate on the map"""
     mapLeftMargin = HALF_WINWIDTH + cameraOffsetX - mapWidth/2
     mapTopMargin = HALF_WINHEIGHT + cameraOffsetY - mapHeight/2
     px = 0
@@ -510,16 +632,13 @@ def getTileAtPixel(x, y):
     return (None, None)
 
 
-# Convert state of game to army number
 def getArmyFromState(state):
-    if '1' in state:
-        return 1
-    else:
-        return 2
+    """Convert state of game to army number"""
+    return 1 if '1' in state else 2
 
 
-# Get turn hint
 def getTurnlight(mousex, mousey, army):
+    """Get turn hint"""
     x, y = getTileAtPixel(mousex, mousey)
     if x != None and y != None:
         direction = getDirectionByPosition(x, y, army)
@@ -534,7 +653,7 @@ def getTurnlight(mousex, mousey, army):
 
 
 def getTurnHold(mousex, mousey, army):
-	"""Get hold on list of turn"""
+    """Get hold on list of turn"""
     x, y = getTileAtPixel(mousex, mousey)
     if x != None and y != None:
         direction = getDirectionByPosition(x, y, army)
@@ -553,7 +672,7 @@ def getTurnHold(mousex, mousey, army):
 
 
 def getHighlight(mousex, mousey, mapObj, army, enemy):
-	"""Get step hint"""
+    """Get step hint"""
     x, y = getTileAtPixel(mousex, mousey)
     if x != None and y != None:
         direction = getDirectionByPosition(x, y, army)
@@ -581,8 +700,8 @@ def getHighlight(mousex, mousey, mapObj, army, enemy):
 
 
 def isSoldier(army, x, y):
-	"""Returns True if there is a soldier in the army
-	on position (x, y)"""
+    """Returns True if there is a soldier in the army
+    on position (x, y)"""
     return getDirectionByPosition(x, y, army) != None
 
 
@@ -661,7 +780,7 @@ def floodFill(mapObj, position, oldCharacter, newCharacter):
 
 
 def readLevelsFile(filename):
-	"""Read map from txt file"""
+    """Read map from txt file"""
     assert os.path.exists(filename), 'Cannot find the level file: %s' % (filename)
     mapFile = open(filename, 'r')
     # Each level must end with a blank line
@@ -776,8 +895,8 @@ def drawMap(mapObj, army1, army2, mhint):
 
 
 def getDirectionByPosition(x, y, army):
-	"""Return the direction of soldier on (x, y)
-	Return None if no soldier in the army is on (x, y)"""
+    """Return the direction of soldier on (x, y)
+    Return None if no soldier in the army is on (x, y)"""
     for soldier in army:
         if (x, y) == soldier.getPosition():
             return soldier.direction
@@ -785,24 +904,18 @@ def getDirectionByPosition(x, y, army):
 
 
 def stepForwardAt(pos, army):
-	"""Call step movement at pos = (x, y)"""
-    for soldier in army:
-        if pos == list(soldier.getPosition()):
-            soldier.stepForward()
+    """Call step movement at pos = (x, y)"""
+    [soldier.stepForward() for soldier in army if pos == list(soldier.getPosition())]
 
 
 def turnRightAt(pos, army):
-	"""Call turn right movement at pos = (x, y)"""
-    for soldier in army:
-        if pos == list(soldier.getPosition()):
-            soldier.turnRight()
+    """Call turn right movement at pos = (x, y)"""
+    [soldier.turnRight() for soldier in army if pos == list(soldier.getPosition())]
 
 
 def turnLeftAt(pos, army):
-	"""Call turn left movement at pos = (x, y)"""
-    for soldier in army:
-        if pos == list(soldier.getPosition()):
-            soldier.turnLeft()
+    """Call turn left movement at pos = (x, y)"""
+    [soldier.turnLeft() for soldier in army if pos == list(soldier.getPosition())]
 
 
 def startScreen():
