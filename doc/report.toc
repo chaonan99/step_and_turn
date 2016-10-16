@@ -1,8 +1,0 @@
-\contentsline {section}{\numberline {1}声明}{2}{section.1}
-\contentsline {section}{\numberline {2}Step-and-turn游戏规则}{2}{section.2}
-\contentsline {section}{\numberline {3}UI设计}{2}{section.3}
-\contentsline {paragraph}{开始界面}{2}{section.3}
-\contentsline {paragraph}{游戏界面}{2}{figure.caption.1}
-\contentsline {paragraph}{地图文件说明}{4}{figure.caption.3}
-\contentsline {paragraph}{地图装饰方案}{4}{figure.caption.3}
-\contentsline {paragraph}{游戏数学逻辑}{4}{figure.caption.3}
