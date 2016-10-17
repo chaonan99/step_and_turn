@@ -1,6 +1,19 @@
+; Step and turn
+; Everything after the ; is a comment and will be ignored by the game that
+; reads in this file.
+;
+; The map format is adapted from Sokoban game:
+; http://sokobano.de/wiki/index.php?title=Level_format
+;   #          - A wall
+;   W, A, S, D - character of player1, facing north, west, south, east respectively
+;   I, J, K, L - character of player2, facing north, west, south, east respectively
+;
+; Level maps are separated by a blank line (I like to use a ; at the start
+; of the line since it is more visible.)
+;
 ; Demo level:
 
-;1
+; 1
 #########
 # DI AK #
 #S##### #
@@ -11,7 +24,7 @@
 #S  AL  #
 #########
 
-;2
+; 2
    ###
   ## # ####
  ##  ###  #
@@ -21,7 +34,7 @@
   #  #    #
   #########
 
-;3
+; 3
    ###
   ##L######
 ##        #
@@ -31,7 +44,7 @@
   #  #    #
   #########
 
-;4
+; 4 (a big map to show camera change)
    ###
   ##L######
 ##        ##
@@ -49,3 +62,5 @@
     # K  AL ####
   #### #    #
   ###########
+
+; Add your awesome map below!

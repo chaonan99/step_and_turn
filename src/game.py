@@ -1,6 +1,7 @@
 # Step and Turn
 # By chaonan99 (Haonan Chen) chenhaonan1995@gmail.com
 # 2016/10/16
+# https://github.com/chaonan99/step_and_turn
 
 import pygame, sys, random, os, copy
 from pygame.locals import *
@@ -933,10 +934,12 @@ def startScreen():
     # a time, so we can't use strings with \n newline characters in them.
     # So we will use a list with each line in it.
     instructionText = ['Step first and turn right or left next.',
-                         'Hover your mouse to get hint, click mouse to move',
+                         'Hover your mouse to get hint, click mouse to move.',
                          'WASD for camera control, P to change character.',
                          'Backspace to reset level, Esc to quit.',
-                         'N for next level, B to go back a level.']
+                         'N for next level, B to go back a level.',
+                         'I to change the current player to AI player.',
+                         'O to remove all AI players.']
 
     # Start with drawing a blank color to the entire window:
     DISPLAYSURF.fill(BGCOLOR)
