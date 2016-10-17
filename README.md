@@ -31,5 +31,6 @@ You are always welcomed to contribute to this project!
 * Sweigart's [pygame book](http://inventwithpython.com/pygame/) and [star pusher example](http://inventwithpython.com/pygame/chapter9.html) helps me a lot. This game is adapted from his star pusher game.
 * AI framework provided by [easyAI](https://github.com/Zulko/easyAI). I've made some changes to adapt to this game (You don't need to install this package).
 
-## LICENSE
-MIT
+## Other random things...
+* [Branching model](http://nvie.com/posts/a-successful-git-branching-model/).
+* LICENSE: MIT
