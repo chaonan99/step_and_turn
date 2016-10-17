@@ -18,5 +18,5 @@
 * Main UI
 	![ui](doc/pic/ui.png)
 * Hints
-	![stephint](doc/pic/stephint.png)
-	![turnhint](doc/pic/turnhint.png)
+	* ![stephint](doc/pic/stephint.png)
+	* ![turnhint](doc/pic/turnhint.png)
