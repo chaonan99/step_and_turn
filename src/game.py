@@ -68,64 +68,54 @@ class StepTurnAI(TwoPlayersGame):
         self.nplayer = 1  # player 1 starts.
 
     def possible_moves(self):
-        if self.nplayer == 1:
-            army = self.levelObj['army1']
-            enemy = self.levelObj['army2']
-        else:
-            army = self.levelObj['army2']
-            enemy = self.levelObj['army1']
+        army, enemy = self.getArmyEnemy()
         moves = []
-        for soldier in army:
+        for ind, soldier in enumerate(army):
             if soldierCanMove(self.levelObj['mapObj'], soldier, army + enemy):
-                move = {'from': list(soldier.getPosition()), 'turnPos': [], 'turn': None}
-                for soldierTurn in army:
-                    move['turnPos'] = list(soldierTurn.getPosition())
+                move = {'from': ind}
+                for ind_turn, soldierTurn in enumerate(army):
+                    move['turnPos'] = ind_turn
+
                     for turn in range(0, 2):  # 0 for left, 1 for right
                         move['turn'] = turn
-                        moves.append(copy.deepcopy(move))
+                        moves.append(copy.deepcopy(move))  # Must be deep copy!!!
         return moves
 
     def make_move(self, move):
-        turn = move['turn']
-        stepForwardAt(move['from'], self.levelObj['army1'] + self.levelObj['army2'])
-        if turn == 0:
-            turnLeftAt(move['turnPos'], self.levelObj['army1'] + self.levelObj['army2'])
+        army, enemy = self.getArmyEnemy()
+        army[move['from']].stepForward()
+        if move['turn'] == 0:
+            army[move['turnPos']].turnLeft()
         else:
-            turnRightAt(move['turnPos'], self.levelObj['army1'] + self.levelObj['army2'])
-
-    # def show(self):
+            army[move['turnPos']].turnRight()
 
     def lose(self):
-        if self.nplayer == 1:
-            army = self.levelObj['army1']
-            enemy = self.levelObj['army2']
-        else:
-            army = self.levelObj['army2']
-            enemy = self.levelObj['army1']
+        army, enemy = self.getArmyEnemy()
         return not canMove(self.levelObj['mapObj'], army, enemy)
 
     def scoring(self):
         score = 0
         if self.lose():
             score -= 100
-        if self.nplayer == 1:
-            army = self.levelObj['army1']
-            enemy = self.levelObj['army2']
-        else:
-            army = self.levelObj['army2']
-            enemy = self.levelObj['army1']
+        army, enemy = self.getArmyEnemy()
         for soldier in army:
             if soldierCanMove(self.levelObj['mapObj'], soldier, army + enemy):
-                score += 8
+                score += 20
             if haveEnemyBehind(soldier, enemy):
-                score += 8
-        for soldier in enemy:
-            if soldierCanMove(self.levelObj['mapObj'], soldier, army + enemy):
-                score -= 12
+                score += 20
+        # for soldier in enemy:
+        #     if soldierCanMove(self.levelObj['mapObj'], soldier, army + enemy):
+        #         score -= 12
         return score
 
     def is_over(self):
         return self.lose()
+
+    def getArmyEnemy(self):
+        if self.nplayer == 1:
+            return self.levelObj['army1'], self.levelObj['army2']
+        else:
+            return self.levelObj['army2'], self.levelObj['army1']
 
 
 class ImageProvider(object):
@@ -258,7 +248,7 @@ def main():
                 # If there are no previous levels, go to the last one.
                 currentLevelIndex = len(levels) - 1
         elif result == 'reset':
-            pass
+             pass
 
 
 def loadImage():

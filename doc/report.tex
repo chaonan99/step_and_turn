@@ -66,30 +66,24 @@
 游戏开始界面如图\ref{fig:startscreen}所示。其中艺术字使用{\ttfamily Adobe PhotoShop}绘制，并给出了游戏用法的提示：
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=11cm]{pic/startscreen.png}
+\includegraphics[width=8cm]{pic/startscreen.png}
 \caption{Step-and-Turn开始界面}
 \label{fig:startscreen}
 \end{figure}
 
 \paragraph{游戏界面}
 按任意键将从开始界面进入游戏主界面，如图\ref{fig:ui}。程序将从已有的地图文件中读入地图信息，并装饰地图。界面右下角提示了当前关卡，总关卡数和当前行动的玩家。
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=11cm]{pic/ui.png}
-\caption{Step-and-Turn主界面}
-\label{fig:ui}
-\end{figure}
 
 \begin{figure}[htbp]
 \begin{minipage}[t]{0.5\linewidth}
 	\centering
-	\includegraphics[width=5cm]{pic/ui.png}
+	\includegraphics[width=5.5cm]{pic/ui.png}
 	\caption{Step-and-Turn主界面}
 	\label{fig:ui}
 \end{minipage}
 \begin{minipage}[t]{0.5\linewidth}
 	\centering
-	\includegraphics[width=6cm]{pic/bigmap.png}
+	\includegraphics[width=5.5cm]{pic/bigmap.png}
 	\caption{大地图的视场移动}
 	\label{fig:bigmap}
 \end{minipage}
@@ -102,20 +96,36 @@
 	\item {\ttfamily P}键切换当前玩家的人物。游戏在每次启动都会随机选取人物，且切换之后在所有关卡都生效。
 	\item {\ttfamily Esc}键退出，退格键重置当前关，{\ttfamily N}进入下一关，{\ttfamily B}退回上一关。
 	\item {\ttfamily I}键将当前玩家设为AI，{\ttfamily O}键清除所有AI。
+	\item 胜利时（图\ref{fig:win}）按任意键进入下一关；失败时（图\ref{fig:fail}）按任意键重新玩本关。（注意：游戏中胜利和失败是针对玩家一的。）
 \end{itemize}
 
 \begin{figure}[htbp]
 \begin{minipage}[t]{0.5\linewidth}
 \centering
-\includegraphics[width=3in]{pic/stephint.png}
+\includegraphics[width=2.4in]{pic/stephint.png}
 \caption{前进提示}
 \label{fig:stephint}
 \end{minipage}
 \begin{minipage}[t]{0.5\linewidth}
 \centering
-\includegraphics[width=2in]{pic/turnhint.png}
+\includegraphics[width=1.6in]{pic/turnhint.png}
 \caption{旋转提示}
 \label{fig:turnhint}
+\end{minipage}
+\end{figure}
+
+\begin{figure}[htbp]
+\begin{minipage}[t]{0.5\linewidth}
+	\centering
+	\includegraphics[width=5.5cm]{pic/win.png}
+	\caption{胜利}
+	\label{fig:win}
+\end{minipage}
+\begin{minipage}[t]{0.5\linewidth}
+	\centering
+	\includegraphics[width=5.5cm]{pic/fail.png}
+	\caption{失败}
+	\label{fig:fail}
 \end{minipage}
 \end{figure}
 
@@ -149,33 +159,63 @@
 \end{itemize}
 使用该框架可以实现很多双人游戏。相关文档和样例参见\url{http://zulko.github.io/easyAI/}。
 该框架原本运行在命令行下，程序中进行了一些调整以适应游戏界面的输入输出。
-\paragraph{基类与玩家}
+\subsection{基类与玩家}
 {\ttfamily TwoPlayersGame}类在{\ttfamily TwoPlayersGame.py}中定义。程序中增加了单步运行的方法，在玩家为AI时可以运行一步（原框架为循环两个玩家进行游戏），并支持更多可能走法的表示（原框架使用字符串表示）。
 玩家在{\ttfamily Player.py}中定义。其中AI的{\ttfamily ask\_move}方法调用搜索算法，Human Player的{\ttfamily ask\_move}方法没有使用。
-\paragraph{Negamax搜索}
-easyAI中使用带有$\alpha$-$\beta$剪枝和转置表的Negamax搜索算法（参考\url{https://en.wikipedia.org/wiki/Negamax}）。
+\subsection{Negamax搜索}
+easyAI中使用带有$\alpha$-$\beta$剪枝和换位表（transposition table）的Negamax搜索算法（参考：\url{https://en.wikipedia.org/wiki/Negamax}）。Negamax是一种限定在零和博弈中的最大最小搜索算法。零和博弈可以理解为对一方有利则对另一方不利。在Step-and-Turn游戏中，一方的分数越高，对另一方就越不利，是零和的。
+\paragraph{基本的Negamax搜索}
+基本的Negamax搜索算法如下（伪代码）：
+
+\begin{lstlisting}
+function negamax(game, depth, color):
+	if depth = 0 or game.is_over():
+		return color * game.scoring() + g(depth)
+
+	bestValue := −inf
+	foreach possible_move of game:
+		game.make_move()
+		v := −negamax(game, depth − 1, −color)
+		bestValue := max(bestValue, v)
+		game.unmake_move()
+	return bestValue
+
+\end{lstlisting}
+
+可以看到，Negamax是深度优先的，基本算法简单的执行最大最小搜索，最终将根节点获得的分数返回。其中{\ttfamily game.scoring()}相当于启发式搜索的$h(x)$，且程序中将$g(x)$设计为深度的函数。
+
+\paragraph{带有$\alpha$-$\beta$剪枝的Negamax算法}
+算法如图\ref{fig:ab_prune}。该方法的原理是如果取小节点（Minimizer）的值已经小于其父节点的值，由于父节点是取大节点（Maximizer），而取小节点的值只能越变越小，因此该节点的值不会回传到父节点，整枝都可以减掉。反之亦然。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=11cm]{pic/ab_prune.png}
+\caption{$\alpha$-$\beta$剪枝}
+\caption*{来源：\url{https://en.wikipedia.org/wiki/Alpha\%E2\%80\%93beta_pruning}}
+\label{fig:ab_prune}
+\end{figure}
+
+\paragraph{带有换位表的Negamax算法}
+换位表选择性的保存一些游戏状态。其中“换位”是指某种游戏状态可以通过多个路径到达。在换位表中如果检查到了先前已有的状态，程序可以直接返回分数，不必重新算分。这种改进在游戏状态冲突较多时可以提升程序的运行效率。
 
 \section{游戏数学逻辑}
 \paragraph{搜索复杂度分析}游戏中人物的行动集是有限的。轮到某一方时，先选择行走的棋子，再选择旋转的棋子。假设某方有$n$个棋子，极端情况下，所有棋子都可以移动，而旋转是不受限制的，可能的行动总共$2n^2$种。据此可以构建搜索树，以某个游戏状态为初始节点，最多产生$2n^2$个分支。若搜索深度为$h$，复杂度为$O(n^{2h})$。
 \paragraph{打分规则}
 上一节提到了Negamax搜索中使用$\alpha$-$\beta$剪枝，需要得到节点的分数。程序中采用如下规则对状态打分：
 \begin{itemize}
-	\item 本方每多一个可移动棋子，加8分；
-	\item 敌方每多一个可移动棋子，减12分；
+	\item 本方每多一个可移动棋子，加20分；
 	\item 当前状态为本方失败，减100分；
-	\item 本方某棋子身后有敌方棋子，加8分；
+	\item 本方某棋子身后有敌方棋子，加20分；
 	\item 递归减一层，加5分。
 \end{itemize}
 
+注意，由于博弈是零和的，在算法中会将对方的分作为本方的负分处理，因此对整个评分系统来说，不用专门评价对方是否具有可移动棋子并减分。这一点在多次实践中也证明是没有影响的。
 
-\section{展望}
-\paragraph{合理的地图设计}
-目前设计的地图仅为展示之用，胜负情况是不确定的。如果作为闯关游戏，可以研究设计一些稍有难度的地图。
-\paragraph{仍需完善之处}
+\section{仍需完善之处}
 \begin{itemize}
-\item 目前游戏设计仍然是单线程的，因此AI在搜索过程中将无法响应用户输入。如果将双方都选为AI，按{\ttfamily O}键将会等待AI搜索完成才能退出AI模式；
-\item 由于游戏的搜索复杂度较高，在棋子数非常多时搜索很慢；
-\item AI的行动缺少提示。
+\item 目前游戏设计仍然是单线程的，因此AI在搜索过程中将无法响应用户输入。如果将双方都选为AI，按{\ttfamily O}键将会等待AI搜索完成才能退出AI模式。使用多线程有望解决该问题。
+\item 由于游戏的搜索复杂度较高，在棋子数非常多时搜索很慢，可以进一步控制搜索树的深度，必要时可以牺牲最优性，寻找次优解。
+\item AI的行动缺少提示，有时无法看清AI选择了哪个棋子进行旋转。
 \end{itemize}
 
 \end{document}
