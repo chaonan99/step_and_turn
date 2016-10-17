@@ -63,32 +63,6 @@ class TwoPlayersGame:
 
     """
 
-    def play(self, nmoves=1000, verbose=True):
-
-        history = []
-
-        if verbose:
-            self.show()
-
-        for self.nmove in range(1, nmoves+1):
-
-            if self.is_over():
-                break
-
-            move = self.player.ask_move(self)
-            history.append((deepcopy(self), move))
-            self.make_move(move)
-
-            if verbose:
-                print( "\nMove #%d: player %d plays %s :"%(
-                             self.nmove, self.nplayer, str(move)) )
-                self.show()
-
-            self.switch_player()
-
-        history.append(deepcopy(self))
-
-        return history
 
     def oneStep(self):
         assert self.player.name == "AI", "Not in AI mode!"
@@ -110,7 +84,6 @@ class TwoPlayersGame:
 
     def switch_player(self):
         self.nplayer = self.nopponent
-        print(self.nplayer)
 
     def copy(self):
         return deepcopy(self)

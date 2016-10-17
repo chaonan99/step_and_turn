@@ -80,12 +80,27 @@
 \label{fig:ui}
 \end{figure}
 
+\begin{figure}[htbp]
+\begin{minipage}[t]{0.5\linewidth}
+	\centering
+	\includegraphics[width=5cm]{pic/ui.png}
+	\caption{Step-and-Turn主界面}
+	\label{fig:ui}
+\end{minipage}
+\begin{minipage}[t]{0.5\linewidth}
+	\centering
+	\includegraphics[width=6cm]{pic/bigmap.png}
+	\caption{大地图的视场移动}
+	\label{fig:bigmap}
+\end{minipage}
+\end{figure}
+
 操作方法已在开始界面说明，即：
 \begin{itemize}
 	\item 将鼠标悬停在人物上可以获得提示，如图\ref{fig:stephint}和图\ref{fig:turnhint}，点击鼠标可以进行移动。当处于前进状态时，直接点击人物或提示位置；处于旋转状态时，点击人物两边的方块作为目标朝向。
-	\item 当地图较大无法看清全貌时，可以使用{\ttfamily WASD}键移动画面。
+	\item 当地图较大无法看清全貌时，可以使用{\ttfamily WASD}键移动视场，如图\ref{fig:bigmap}。
 	\item {\ttfamily P}键切换当前玩家的人物。游戏在每次启动都会随机选取人物，且切换之后在所有关卡都生效。
-	\item {\ttfamily Esc}键退出，空格键重置当前关，{\ttfamily N}进入下一关，{\ttfamily B}退回上一关。
+	\item {\ttfamily Esc}键退出，退格键重置当前关，{\ttfamily N}进入下一关，{\ttfamily B}退回上一关。
 	\item {\ttfamily I}键将当前玩家设为AI，{\ttfamily O}键清除所有AI。
 \end{itemize}
 
@@ -122,7 +137,45 @@
 	\item 外部空地使用草坪，并随机装饰树、丛、石头等物品。
 \end{itemize}
 
+
+\section{通用AI架构实现}
+本程序的AI架构改编自easyAI框架（\url{https://github.com/Zulko/easyAI}）。通过这个框架，可以提供一个统一的双人游戏搜索算法接口，用户只需要继承{\ttfamily TwoPlayersGame}类，并在子类中定义如下规则：
+\begin{itemize}
+	\item 类的初始化；
+	\item 在当前游戏状态下所有可能的走法；
+	\item 每个走法下游戏状态的转移；
+	\item 胜负判定方法；
+	\item （可选）当前状态下的得分，这将用于启发式搜索。
+\end{itemize}
+使用该框架可以实现很多双人游戏。相关文档和样例参见\url{http://zulko.github.io/easyAI/}。
+该框架原本运行在命令行下，程序中进行了一些调整以适应游戏界面的输入输出。
+\paragraph{基类与玩家}
+{\ttfamily TwoPlayersGame}类在{\ttfamily TwoPlayersGame.py}中定义。程序中增加了单步运行的方法，在玩家为AI时可以运行一步（原框架为循环两个玩家进行游戏），并支持更多可能走法的表示（原框架使用字符串表示）。
+玩家在{\ttfamily Player.py}中定义。其中AI的{\ttfamily ask\_move}方法调用搜索算法，Human Player的{\ttfamily ask\_move}方法没有使用。
+\paragraph{Negamax搜索}
+easyAI中使用带有$\alpha$-$\beta$剪枝和转置表的Negamax搜索算法（参考\url{https://en.wikipedia.org/wiki/Negamax}）。
+
 \section{游戏数学逻辑}
-游戏中
+\paragraph{搜索复杂度分析}游戏中人物的行动集是有限的。轮到某一方时，先选择行走的棋子，再选择旋转的棋子。假设某方有$n$个棋子，极端情况下，所有棋子都可以移动，而旋转是不受限制的，可能的行动总共$2n^2$种。据此可以构建搜索树，以某个游戏状态为初始节点，最多产生$2n^2$个分支。若搜索深度为$h$，复杂度为$O(n^{2h})$。
+\paragraph{打分规则}
+上一节提到了Negamax搜索中使用$\alpha$-$\beta$剪枝，需要得到节点的分数。程序中采用如下规则对状态打分：
+\begin{itemize}
+	\item 本方每多一个可移动棋子，加8分；
+	\item 敌方每多一个可移动棋子，减12分；
+	\item 当前状态为本方失败，减100分；
+	\item 本方某棋子身后有敌方棋子，加8分；
+	\item 递归减一层，加5分。
+\end{itemize}
+
+
+\section{展望}
+\paragraph{合理的地图设计}
+目前设计的地图仅为展示之用，胜负情况是不确定的。如果作为闯关游戏，可以研究设计一些稍有难度的地图。
+\paragraph{仍需完善之处}
+\begin{itemize}
+\item 目前游戏设计仍然是单线程的，因此AI在搜索过程中将无法响应用户输入。如果将双方都选为AI，按{\ttfamily O}键将会等待AI搜索完成才能退出AI模式；
+\item 由于游戏的搜索复杂度较高，在棋子数非常多时搜索很慢；
+\item AI的行动缺少提示。
+\end{itemize}
 
 \end{document}
