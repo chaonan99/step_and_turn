@@ -626,8 +626,8 @@ def soldierCanMove(mapObj, soldier, all_army):
 
 def getTileAtPixel(x, y):
     """Convert mouse point to coordinate on the map"""
-    mapLeftMargin = HALF_WIN_WIDTH + cameraOffsetX - mapWidth / 2
-    mapTopMargin = HALF_WIN_HEIGHT + cameraOffsetY - mapHeight / 2
+    mapLeftMargin = HALF_WIN_WIDTH + cameraOffsetX - mapWidth // 2
+    mapTopMargin = HALF_WIN_HEIGHT + cameraOffsetY - mapHeight // 2
     px = 0
     for tile_xp in range(mapLeftMargin, mapLeftMargin + mapWidth, TILE_WIDTH):
         py = 0
